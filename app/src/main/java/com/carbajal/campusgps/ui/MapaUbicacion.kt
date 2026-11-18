@@ -1,8 +1,10 @@
 package com.carbajal.campusgps.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.carbajal.campusgps.model.LugarConDistancia
 import com.carbajal.campusgps.viewmodel.UbicacionUi
@@ -10,10 +12,35 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
+
+private const val DARK_MAP_STYLE_JSON = """
+[
+  { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
+  { "elementType": "labels.text.fill", "stylers": [{ "color": "#746855" }] },
+  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#242f3e" }] },
+  { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+  { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+  { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#263c3f" }] },
+  { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#6b9a76" }] },
+  { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#38414e" }] },
+  { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#212a37" }] },
+  { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#9ca5b3" }] },
+  { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#746855" }] },
+  { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#1f2835" }] },
+  { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{ "color": "#f3d19c" }] },
+  { "featureType": "transit", "elementType": "geometry", "stylers": [{ "color": "#2f3948" }] },
+  { "featureType": "transit.station", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+  { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#17263c" }] },
+  { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#515c6d" }] },
+  { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#17263c" }] }
+]
+"""
 
 @Composable
 fun MapaUbicacion(
@@ -23,6 +50,18 @@ fun MapaUbicacion(
     masCercanoId: Int? = null,
     modifier: Modifier = Modifier
 ) {
+    val esTemaOscuro = isSystemInDarkTheme()
+
+    val mapProperties = remember(esTemaOscuro) {
+        MapProperties(
+            mapStyleOptions = if (esTemaOscuro) {
+                MapStyleOptions(DARK_MAP_STYLE_JSON)
+            } else {
+                null
+            }
+        )
+    }
+
     // Cámara inicial: Lima (-12.0464, -77.0428) con zoom 12
     val camara = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(-12.0464, -77.0428), 12f)
@@ -57,7 +96,8 @@ fun MapaUbicacion(
 
     GoogleMap(
         modifier = modifier,
-        cameraPositionState = camara
+        cameraPositionState = camara,
+        properties = mapProperties
     ) {
         // Marcador de tu posición en rojo actual
         val miPosicion = when (estado) {
