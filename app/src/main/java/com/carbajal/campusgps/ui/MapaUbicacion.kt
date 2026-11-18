@@ -19,6 +19,8 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 
+private val CENTRO_CAMPUS_TECSUP = LatLng(-12.04398, -76.95291)
+
 private const val DARK_MAP_STYLE_JSON = """
 [
   { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
@@ -62,12 +64,11 @@ fun MapaUbicacion(
         )
     }
 
-    // Cámara inicial: Lima (-12.0464, -77.0428) con zoom 12
     val camara = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(-12.0464, -77.0428), 12f)
+        position = CameraPosition.fromLatLngZoom(CENTRO_CAMPUS_TECSUP, 18f)
     }
 
-    // TODO 1: LaunchedEffect(estado): si es Lista, animar la cámara (zoom 16f)
+    // Centra la cámara al obtener la ubicación del usuario.
     LaunchedEffect(estado) {
         val latLng = when (estado) {
             is UbicacionUi.Lista -> LatLng(estado.latitud, estado.longitud)
@@ -79,18 +80,13 @@ fun MapaUbicacion(
         }
     }
 
-    // LaunchedEffect(seleccionado): anima la cámara hasta ese lugar con zoom 17
-    LaunchedEffect(seleccionado) {
-        if (seleccionado != null) {
-            val lugarSel = lugares.find { it.lugar.id == seleccionado }
-            if (lugarSel != null) {
-                camara.animate(
-                    CameraUpdateFactory.newLatLngZoom(
-                        LatLng(lugarSel.lugar.posicion.latitud, lugarSel.lugar.posicion.longitud),
-                        17f
-                    )
-                )
-            }
+    val lugarSeleccionado = lugares.find { it.lugar.id == seleccionado }?.lugar
+    LaunchedEffect(lugarSeleccionado) {
+        if (lugarSeleccionado != null) {
+            val posicion = lugarSeleccionado.posicion
+            camara.animate(
+                CameraUpdateFactory.newLatLngZoom(LatLng(posicion.latitud, posicion.longitud), 18f)
+            )
         }
     }
 
@@ -115,29 +111,29 @@ fun MapaUbicacion(
 
         // Recorre lugares y dibuja un Marker verde para el más cercano y azul para los demás
         for (item in lugares) {
-            val esElSeleccionado = item.lugar.id == seleccionado
-            val esElMasCercano = item.lugar.id == masCercanoId
-            val posLugar = LatLng(item.lugar.posicion.latitud, item.lugar.posicion.longitud)
-            val markerState = rememberUpdatedMarkerState(position = posLugar)
+            val lugar = item.lugar
+            key(lugar.id) {
+                val posLugar = LatLng(lugar.posicion.latitud, lugar.posicion.longitud)
+                val markerState = rememberUpdatedMarkerState(position = posLugar)
+                val esElSeleccionado = lugar.id == seleccionado
 
-            LaunchedEffect(esElSeleccionado) {
-                if (esElSeleccionado) {
-                    markerState.showInfoWindow()
+                LaunchedEffect(esElSeleccionado) {
+                    if (esElSeleccionado) {
+                        markerState.showInfoWindow()
+                    }
                 }
-            }
 
-            val colorIcono = if (esElMasCercano) {
-                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
-            } else {
-                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
-            }
+                val tono = if (lugar.id == masCercanoId) {
+                    BitmapDescriptorFactory.HUE_GREEN
+                } else {
+                    BitmapDescriptorFactory.HUE_AZURE
+                }
 
-            key(item.lugar.id) {
                 Marker(
                     state = markerState,
-                    title = item.lugar.nombre,
-                    snippet = item.lugar.categoria,
-                    icon = colorIcono
+                    title = lugar.nombre,
+                    snippet = lugar.categoria,
+                    icon = BitmapDescriptorFactory.defaultMarker(tono)
                 )
             }
         }
