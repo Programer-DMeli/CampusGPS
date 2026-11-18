@@ -19,9 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -50,6 +48,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
 ) {
     val estado by vm.estado.collectAsState()
     val lugares by vm.lugares.collectAsState()
+    val seleccionado by vm.seleccionado.collectAsState()
     val contexto = LocalContext.current
 
     val lanzador = rememberLauncherForActivityResult(
@@ -115,19 +114,21 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // MapaUbicacion ocupa el espacio libre con Modifier.weight(1f)
+            // Mapa arriba ocupando el espacio disponible con weight(1f)
             MapaUbicacion(
                 estado = estado,
                 lugares = lugares,
+                seleccionado = seleccionado,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
             )
 
+            // Sección de controles
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(top = 8.dp, bottom = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button(
@@ -137,32 +138,23 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
                     colors = ButtonDefaults.buttonColors(
                         containerColor = bluePrimary,
                         contentColor = Color.White
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    )
                 ) {
                     Text(
                         text = if (estado == UbicacionUi.Buscando) "Buscando..." else "Obtener mi ubicación",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                when (val actual = estado) {
-                    is UbicacionUi.Inicial -> {
-                        Text(
-                            text = "Pulsa el botón para empezar",
-                            color = Color.Gray,
-                            fontSize = 15.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    is UbicacionUi.Buscando -> {
-                        CircularProgressIndicator(color = bluePrimary)
-                    }
-                    is UbicacionUi.PermisoDenegado -> {
+                if (estado is UbicacionUi.PermisoDenegado) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = redContainer
@@ -182,7 +174,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         OutlinedButton(
                             onClick = {
@@ -204,39 +196,18 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
                             )
                         }
                     }
-                    is UbicacionUi.Lista -> {
-                        Text(
-                            text = "Latitud: ${actual.latitud}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Longitud: ${actual.longitud}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    is UbicacionUi.Exito -> {
-                        Text(
-                            text = "Latitud: ${actual.latitud}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Longitud: ${actual.longitud}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    is UbicacionUi.Error -> {
-                        Text(
-                            text = "Error: ${actual.mensaje}",
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center
-                        )
-                    }
                 }
             }
+
+            // Lista abajo con altura fija de 220.dp
+            ListaLugares(
+                lugares = lugares,
+                seleccionado = seleccionado,
+                onClick = { id -> vm.seleccionar(id) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+            )
         }
     }
 }

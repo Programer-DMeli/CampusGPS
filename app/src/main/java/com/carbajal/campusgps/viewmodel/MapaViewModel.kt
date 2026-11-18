@@ -39,6 +39,9 @@ class MapaViewModel(
     )
     val lugares: StateFlow<List<LugarConDistancia>> = _lugares.asStateFlow()
 
+    private val _seleccionado = MutableStateFlow<Int?>(null)
+    val seleccionado: StateFlow<Int?> = _seleccionado.asStateFlow()
+
     fun buscar(context: Context? = null) {
         _estado.value = UbicacionUi.Buscando
         viewModelScope.launch {
@@ -46,7 +49,6 @@ class MapaViewModel(
                 val posicion = if (context != null) repository.obtenerUbicacionActual(context) else null
                 val posFinal = posicion ?: Posicion(-12.0464, -77.0428)
 
-                // TODO Paso 5: Actualizar distancias y ordenar del más cercano al más lejano
                 actualizarDistancias(posFinal)
 
                 _estado.value = UbicacionUi.Lista(posFinal.latitud, posFinal.longitud)
@@ -56,7 +58,6 @@ class MapaViewModel(
         }
     }
 
-    //
     private fun actualizarDistancias(pos: Posicion) {
         val lugaresBase = lugaresRepository.obtenerLugares()
         val listaConDistancia = lugaresBase.map { lugar ->
@@ -66,6 +67,10 @@ class MapaViewModel(
 
         _lugares.value = listaConDistancia
         Log.d("MapaViewModel", "Lugares ordenados por distancia: $listaConDistancia")
+    }
+
+    fun seleccionar(id: Int?) {
+        _seleccionado.value = id
     }
 
     fun permisoDenegado() {

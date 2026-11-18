@@ -2,7 +2,7 @@ pluginManagement {
     repositories {
 
         //imporantamos dependencias y lebrerias de 2 repositorios google y maven genral
-        //una libreria en un codigo  desarrollado por personas externas que hacemos uso en nuestro proyecto, y una dependencia es algo que permi
+        //una libreria en un codigo  desarrollado por personas externas que podemos reutilizar  en nuestro proyecto, y una dependencia es algo
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -27,3 +27,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "CampusGPS"
 include(":app")
+
+
+//poner api en local properties

@@ -39,6 +39,21 @@ fun MapaUbicacion(
         }
     }
 
+    // LaunchedEffect(seleccionado): anima la cámara hasta ese lugar con zoom 17
+    LaunchedEffect(seleccionado) {
+        if (seleccionado != null) {
+            val lugarSel = lugares.find { it.lugar.id == seleccionado }
+            if (lugarSel != null) {
+                camara.animate(
+                    CameraUpdateFactory.newLatLngZoom(
+                        LatLng(lugarSel.lugar.posicion.latitud, lugarSel.lugar.posicion.longitud),
+                        17f
+                    )
+                )
+            }
+        }
+    }
+
     GoogleMap(
         modifier = modifier,
         cameraPositionState = camara
@@ -59,11 +74,19 @@ fun MapaUbicacion(
 
         // Recorre lugares y dibuja un Marker azul por cada lugar usando key(id)
         for (item in lugares) {
+            val esElSeleccionado = item.lugar.id == seleccionado
+            val posLugar = LatLng(item.lugar.posicion.latitud, item.lugar.posicion.longitud)
+            val markerState = rememberUpdatedMarkerState(position = posLugar)
+
+            LaunchedEffect(esElSeleccionado) {
+                if (esElSeleccionado) {
+                    markerState.showInfoWindow()
+                }
+            }
+
             key(item.lugar.id) {
                 Marker(
-                    state = rememberUpdatedMarkerState(
-                        position = LatLng(item.lugar.posicion.latitud, item.lugar.posicion.longitud)
-                    ),
+                    state = markerState,
                     title = item.lugar.nombre,
                     snippet = item.lugar.categoria,
                     icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
