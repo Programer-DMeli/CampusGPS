@@ -10,38 +10,41 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-sealed interface EstadoUbicacion {
-    object Inicial : EstadoUbicacion
-    object Buscando : EstadoUbicacion
-    data class Exito(val latitud: Double, val longitud: Double) : EstadoUbicacion
-    data class Error(val mensaje: String) : EstadoUbicacion
-    object PermisoDenegado : EstadoUbicacion
+sealed interface UbicacionUi {
+    object Inicial : UbicacionUi
+    object Buscando : UbicacionUi
+    data class Lista(val latitud: Double, val longitud: Double) : UbicacionUi
+    data class Exito(val latitud: Double, val longitud: Double) : UbicacionUi
+    data class Error(val mensaje: String) : UbicacionUi
+    object PermisoDenegado : UbicacionUi
 }
+
+typealias EstadoUbicacion = UbicacionUi
 
 class MapaViewModel(
     private val repository: UbicacionRepository = UbicacionRepositoryGoogle()
 ) : ViewModel() {
-    private val _estado = MutableStateFlow<EstadoUbicacion>(EstadoUbicacion.Inicial)
-    val estado: StateFlow<EstadoUbicacion> = _estado.asStateFlow()
+    private val _estado = MutableStateFlow<UbicacionUi>(UbicacionUi.Inicial)
+    val estado: StateFlow<UbicacionUi> = _estado.asStateFlow()
 
     fun buscar(context: Context? = null) {
-        _estado.value = EstadoUbicacion.Buscando
+        _estado.value = UbicacionUi.Buscando
         viewModelScope.launch {
             try {
                 val posicion = if (context != null) repository.obtenerUbicacionActual(context) else null
                 if (posicion != null) {
-                    _estado.value = EstadoUbicacion.Exito(posicion.latitud, posicion.longitud)
+                    _estado.value = UbicacionUi.Lista(posicion.latitud, posicion.longitud)
                 } else {
-                    // Posición por defecto en caso de no obtener ubicación en emulador
-                    _estado.value = EstadoUbicacion.Exito(-12.046374, -77.042793)
+                    // Posición base por defecto en Lima si no responde ubicación en emulador
+                    _estado.value = UbicacionUi.Lista(-12.0464, -77.0428)
                 }
             } catch (e: Exception) {
-                _estado.value = EstadoUbicacion.Error(e.message ?: "Error al obtener la ubicación")
+                _estado.value = UbicacionUi.Error(e.message ?: "Error al obtener la ubicación")
             }
         }
     }
 
     fun permisoDenegado() {
-        _estado.value = EstadoUbicacion.PermisoDenegado
+        _estado.value = UbicacionUi.PermisoDenegado
     }
 }

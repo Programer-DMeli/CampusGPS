@@ -40,8 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.carbajal.campusgps.viewmodel.EstadoUbicacion
 import com.carbajal.campusgps.viewmodel.MapaViewModel
+import com.carbajal.campusgps.viewmodel.UbicacionUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,97 +113,126 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button(
-                onClick = { alPulsar() },
-                enabled = estado != EstadoUbicacion.Buscando,
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = bluePrimary,
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.padding(bottom = 12.dp)
+            // MapaUbicacion ocupa el espacio libre con Modifier.weight(1f)
+            MapaUbicacion(
+                estado = estado,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = if (estado == EstadoUbicacion.Buscando) "Buscando..." else "Obtener mi ubicación",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            when (val actual = estado) {
-                is EstadoUbicacion.Inicial -> {
+                Button(
+                    onClick = { alPulsar() },
+                    enabled = estado != UbicacionUi.Buscando,
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = bluePrimary,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
                     Text(
-                        text = "Pulsa el botón para empezar",
-                        color = Color.Gray,
-                        fontSize = 15.sp,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                is EstadoUbicacion.Buscando -> {
-                    CircularProgressIndicator(color = bluePrimary)
-                }
-                is EstadoUbicacion.PermisoDenegado -> {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = redContainer
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Sin permiso de ubicación no puedo mostrar dónde estás",
-                            color = redText,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 18.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(28.dp))
-
-                    OutlinedButton(
-                        onClick = {
-                            val intent = Intent(
-                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.fromParts("package", contexto.packageName, null)
-                            )
-                            contexto.startActivity(intent)
-                        },
-                        shape = RoundedCornerShape(24.dp),
-                        border = BorderStroke(1.5.dp, bluePrimary)
-                    ) {
-                        Text(
-                            text = "Abrir ajustes",
-                            color = bluePrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-                is EstadoUbicacion.Exito -> {
-                    Text(
-                        text = "Latitud: ${actual.latitud}, Longitud: ${actual.longitud}",
-                        style = MaterialTheme.typography.bodyLarge,
+                        text = if (estado == UbicacionUi.Buscando) "Buscando..." else "Obtener mi ubicación",
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
-                is EstadoUbicacion.Error -> {
-                    Text(
-                        text = "Error: ${actual.mensaje}",
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                when (val actual = estado) {
+                    is UbicacionUi.Inicial -> {
+                        Text(
+                            text = "Pulsa el botón para empezar",
+                            color = Color.Gray,
+                            fontSize = 15.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    is UbicacionUi.Buscando -> {
+                        CircularProgressIndicator(color = bluePrimary)
+                    }
+                    is UbicacionUi.PermisoDenegado -> {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = redContainer
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Sin permiso de ubicación no puedo mostrar dónde estás",
+                                color = redText,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 18.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                val intent = Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", contexto.packageName, null)
+                                )
+                                contexto.startActivity(intent)
+                            },
+                            shape = RoundedCornerShape(24.dp),
+                            border = BorderStroke(1.5.dp, bluePrimary)
+                        ) {
+                            Text(
+                                text = "Abrir ajustes",
+                                color = bluePrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    is UbicacionUi.Lista -> {
+                        Text(
+                            text = "Latitud: ${actual.latitud}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Longitud: ${actual.longitud}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    is UbicacionUi.Exito -> {
+                        Text(
+                            text = "Latitud: ${actual.latitud}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Longitud: ${actual.longitud}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    is UbicacionUi.Error -> {
+                        Text(
+                            text = "Error: ${actual.mensaje}",
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }

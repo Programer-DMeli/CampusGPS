@@ -2,6 +2,14 @@ package com.carbajal.campusgps.model
 
 data class Posicion(val latitud: Double, val longitud: Double)
 
+data class Lugar(
+    val id: Int,
+    val nombre: String,
+    val descripcion: String = "",
+    val posicion: Posicion
+)
 
-class Modelos {
-}
+data class LugarConDistancia(
+    val lugar: Lugar,
+    val distanciaMetros: Int = 0
+)
