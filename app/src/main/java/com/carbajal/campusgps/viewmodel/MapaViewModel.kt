@@ -30,7 +30,7 @@ sealed interface UbicacionUi {
     object PermisoDenegado : UbicacionUi
 }
 
-typealias EstadoUbicacion = UbicacionUi
+typealias EstadoUbicacion = UbicacionUi  //-->
 
 class MapaViewModel(
     private val repository: UbicacionRepository = UbicacionRepositoryGoogle(),
@@ -76,6 +76,7 @@ class MapaViewModel(
                     actualizarDistancias(posDefault)
                     _estado.value = UbicacionUi.Lista(posDefault.latitud, posDefault.longitud)
                 } else {
+
                     _estado.value = UbicacionUi.Error(
                         "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
                         TipoError.GPS_APAGADO

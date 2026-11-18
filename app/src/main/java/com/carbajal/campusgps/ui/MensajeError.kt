@@ -24,6 +24,7 @@ import com.carbajal.campusgps.viewmodel.UbicacionUi
 
 @Composable
 fun MensajeError(
+    //composable que renderiza la tarjeta roja de mensaje en la pantalla
     error: UbicacionUi.Error,
     onAbrirAjustes: () -> Unit,
     onReintentar: () -> Unit,
