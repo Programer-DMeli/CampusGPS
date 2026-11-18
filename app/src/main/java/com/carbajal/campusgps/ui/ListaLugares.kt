@@ -32,12 +32,14 @@ import com.carbajal.campusgps.util.formatearDistancia
 fun ListaLugares(
     lugares: List<LugarConDistancia>,
     seleccionado: Int?,
-    onClick: (Int) -> Unit,
+    onClick: (Int) -> Unit,  //
     modifier: Modifier = Modifier
 ) {
     val bluePrimary = Color(0xFF00639B)
     val selectedBg = Color(0xFFD7E3FF)
 
+
+    //Mostramos las tarjetas con lazycolumn
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp)
     ) {

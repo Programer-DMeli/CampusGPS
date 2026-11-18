@@ -8,6 +8,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.carbajal.campusgps.util.formatearDistancia
 import com.carbajal.campusgps.viewmodel.MapaViewModel
 import com.carbajal.campusgps.viewmodel.UbicacionUi
 
@@ -49,6 +51,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
     val estado by vm.estado.collectAsState()
     val lugares by vm.lugares.collectAsState()
     val seleccionado by vm.seleccionado.collectAsState()
+    val masCercano by vm.masCercano.collectAsState()
     val contexto = LocalContext.current
 
     val lanzador = rememberLauncherForActivityResult(
@@ -94,6 +97,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
     val redText = Color(0xFFD93025)
 
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
                 title = {
@@ -112,6 +116,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.White)
                 .padding(innerPadding)
         ) {
             // Mapa arriba ocupando el espacio disponible con weight(1f)
@@ -119,6 +124,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
                 estado = estado,
                 lugares = lugares,
                 seleccionado = seleccionado,
+                masCercanoId = masCercano?.id,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -128,6 +134,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color.White)
                     .padding(top = 8.dp, bottom = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -145,6 +152,44 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Botón Ir al más cercano
+                OutlinedButton(
+                    onClick = {
+                        masCercano?.let { vm.seleccionar(it.id) }
+                    },
+                    enabled = masCercano != null,
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(1.5.dp, if (masCercano != null) bluePrimary else Color.LightGray)
+                ) {
+                    Text(
+                        text = "Ir al más cercano",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = if (masCercano != null) bluePrimary else Color.Gray,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+
+                // Texto del más cercano
+                if (masCercano != null) {
+                    val lugarConDist = lugares.find { it.lugar.id == masCercano?.id }
+                    val textoDist = if (lugarConDist != null && lugarConDist.distanciaMetros > 0) {
+                        formatearDistancia(lugarConDist.distanciaMetros.toFloat())
+                    } else {
+                        ""
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Más cercano: ${masCercano?.nombre} ($textoDist)",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
                 }
 
@@ -206,6 +251,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
                 onClick = { id -> vm.seleccionar(id) },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color.White)
                     .height(220.dp)
             )
         }

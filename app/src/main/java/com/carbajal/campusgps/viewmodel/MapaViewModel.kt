@@ -8,12 +8,16 @@ import com.carbajal.campusgps.data.LugaresRepository
 import com.carbajal.campusgps.data.LugaresRepositoryLocal
 import com.carbajal.campusgps.data.UbicacionRepository
 import com.carbajal.campusgps.data.UbicacionRepositoryGoogle
+import com.carbajal.campusgps.model.Lugar
 import com.carbajal.campusgps.model.LugarConDistancia
 import com.carbajal.campusgps.model.Posicion
 import com.carbajal.campusgps.util.distanciaMetros
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 sealed interface UbicacionUi {
@@ -42,6 +46,14 @@ class MapaViewModel(
     private val _seleccionado = MutableStateFlow<Int?>(null)
     val seleccionado: StateFlow<Int?> = _seleccionado.asStateFlow()
 
+    val masCercano: StateFlow<Lugar?> = lugares.map { lista ->
+        lista.firstOrNull { it.distanciaMetros > 0 }?.lugar
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
     fun buscar(context: Context? = null) {
         _estado.value = UbicacionUi.Buscando
         viewModelScope.launch {
@@ -69,7 +81,7 @@ class MapaViewModel(
         Log.d("MapaViewModel", "Lugares ordenados por distancia: $listaConDistancia")
     }
 
-    fun seleccionar(id: Int?) {
+    fun seleccionar(id: Int?) {  //La funcion seleccionar id para actualizar el ID del lugar seleccionado
         _seleccionado.value = id
     }
 

@@ -20,6 +20,7 @@ fun MapaUbicacion(
     estado: UbicacionUi,
     lugares: List<LugarConDistancia> = emptyList(),
     seleccionado: Int? = null,
+    masCercanoId: Int? = null,
     modifier: Modifier = Modifier
 ) {
     // Cámara inicial: Lima (-12.0464, -77.0428) con zoom 12
@@ -72,9 +73,10 @@ fun MapaUbicacion(
             )
         }
 
-        // Recorre lugares y dibuja un Marker azul por cada lugar usando key(id)
+        // Recorre lugares y dibuja un Marker verde para el más cercano y azul para los demás
         for (item in lugares) {
             val esElSeleccionado = item.lugar.id == seleccionado
+            val esElMasCercano = item.lugar.id == masCercanoId
             val posLugar = LatLng(item.lugar.posicion.latitud, item.lugar.posicion.longitud)
             val markerState = rememberUpdatedMarkerState(position = posLugar)
 
@@ -84,12 +86,18 @@ fun MapaUbicacion(
                 }
             }
 
+            val colorIcono = if (esElMasCercano) {
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+            } else {
+                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+            }
+
             key(item.lugar.id) {
                 Marker(
                     state = markerState,
                     title = item.lugar.nombre,
                     snippet = item.lugar.categoria,
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                    icon = colorIcono
                 )
             }
         }
