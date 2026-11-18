@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        load(file.inputStream())
+    }
+}
+
+//Actualizamos buil.gradle.kts para leer local.properties en donde creacmos la variable para utilizar la api key de google maps
 android {
     namespace = "com.carbajal.campusgps"
     compileSdk {
@@ -15,6 +25,10 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+
+        //Inyectar clave de Maps Hacia  el AndroidMenifest
+
+        manifestPlaceholders["MAPS_API_KEY"] = localProps.getProperty("MAPS_API_KEY") ?: ""
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -45,6 +59,13 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+
+    // Dependencias del proyecto CampusGPS
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+    implementation("com.google.maps.android:maps-compose:8.4.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
