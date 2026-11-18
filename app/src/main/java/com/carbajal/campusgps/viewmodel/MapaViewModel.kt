@@ -1,6 +1,7 @@
 package com.carbajal.campusgps.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carbajal.campusgps.data.LugaresRepository
@@ -8,6 +9,8 @@ import com.carbajal.campusgps.data.LugaresRepositoryLocal
 import com.carbajal.campusgps.data.UbicacionRepository
 import com.carbajal.campusgps.data.UbicacionRepositoryGoogle
 import com.carbajal.campusgps.model.LugarConDistancia
+import com.carbajal.campusgps.model.Posicion
+import com.carbajal.campusgps.util.distanciaMetros
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,16 +44,28 @@ class MapaViewModel(
         viewModelScope.launch {
             try {
                 val posicion = if (context != null) repository.obtenerUbicacionActual(context) else null
-                if (posicion != null) {
-                    _estado.value = UbicacionUi.Lista(posicion.latitud, posicion.longitud)
-                } else {
-                    // Posición base por defecto en Lima si no responde ubicación en emulador
-                    _estado.value = UbicacionUi.Lista(-12.0464, -77.0428)
-                }
+                val posFinal = posicion ?: Posicion(-12.0464, -77.0428)
+
+                // TODO Paso 5: Actualizar distancias y ordenar del más cercano al más lejano
+                actualizarDistancias(posFinal)
+
+                _estado.value = UbicacionUi.Lista(posFinal.latitud, posFinal.longitud)
             } catch (e: Exception) {
                 _estado.value = UbicacionUi.Error(e.message ?: "Error al obtener la ubicación")
             }
         }
+    }
+
+    //
+    private fun actualizarDistancias(pos: Posicion) {
+        val lugaresBase = lugaresRepository.obtenerLugares()
+        val listaConDistancia = lugaresBase.map { lugar ->
+            val dist = distanciaMetros(pos, lugar)
+            LugarConDistancia(lugar = lugar, distanciaMetros = dist.toInt())
+        }.sortedBy { it.distanciaMetros }
+
+        _lugares.value = listaConDistancia
+        Log.d("MapaViewModel", "Lugares ordenados por distancia: $listaConDistancia")
     }
 
     fun permisoDenegado() {

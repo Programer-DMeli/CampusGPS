@@ -1,5 +1,8 @@
 pluginManagement {
     repositories {
+
+        //imporantamos dependencias y lebrerias de 2 repositorios google y maven genral
+        //una libreria en un codigo  desarrollado por personas externas que hacemos uso en nuestro proyecto, y una dependencia es algo que permi
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
