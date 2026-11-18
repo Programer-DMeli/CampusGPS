@@ -14,3 +14,10 @@ data class LugarConDistancia(
     val lugar: Lugar,
     val distanciaMetros: Int = 0
 )
+
+enum class TipoError {
+    SIN_PERMISO,
+    GPS_APAGADO,
+    SIN_PLAY_SERVICES,
+    OTRO
+}

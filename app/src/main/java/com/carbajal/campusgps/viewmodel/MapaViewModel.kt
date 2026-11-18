@@ -11,6 +11,7 @@ import com.carbajal.campusgps.data.UbicacionRepositoryGoogle
 import com.carbajal.campusgps.model.Lugar
 import com.carbajal.campusgps.model.LugarConDistancia
 import com.carbajal.campusgps.model.Posicion
+import com.carbajal.campusgps.model.TipoError
 import com.carbajal.campusgps.util.distanciaMetros
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,7 +26,7 @@ sealed interface UbicacionUi {
     object Buscando : UbicacionUi
     data class Lista(val latitud: Double, val longitud: Double) : UbicacionUi
     data class Exito(val latitud: Double, val longitud: Double) : UbicacionUi
-    data class Error(val mensaje: String) : UbicacionUi
+    data class Error(val mensaje: String, val tipo: TipoError = TipoError.OTRO) : UbicacionUi
     object PermisoDenegado : UbicacionUi
 }
 
@@ -57,15 +58,34 @@ class MapaViewModel(
     fun buscar(context: Context? = null) {
         _estado.value = UbicacionUi.Buscando
         viewModelScope.launch {
+            if (context != null && !repository.playServicesDisponible(context)) {
+                _estado.value = UbicacionUi.Error(
+                    "Este dispositivo no tiene Google Play Services",
+                    TipoError.SIN_PLAY_SERVICES
+                )
+                return@launch
+            }
+
             try {
                 val posicion = if (context != null) repository.obtenerUbicacionActual(context) else null
-                val posFinal = posicion ?: Posicion(-12.0464, -77.0428)
-
-                actualizarDistancias(posFinal)
-
-                _estado.value = UbicacionUi.Lista(posFinal.latitud, posFinal.longitud)
+                if (posicion != null) {
+                    actualizarDistancias(posicion)
+                    _estado.value = UbicacionUi.Lista(posicion.latitud, posicion.longitud)
+                } else if (context == null) {
+                    val posDefault = Posicion(-12.0464, -77.0428)
+                    actualizarDistancias(posDefault)
+                    _estado.value = UbicacionUi.Lista(posDefault.latitud, posDefault.longitud)
+                } else {
+                    _estado.value = UbicacionUi.Error(
+                        "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
+                        TipoError.GPS_APAGADO
+                    )
+                }
             } catch (e: Exception) {
-                _estado.value = UbicacionUi.Error(e.message ?: "Error al obtener la ubicación")
+                _estado.value = UbicacionUi.Error(
+                    "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
+                    TipoError.GPS_APAGADO
+                )
             }
         }
     }
@@ -86,6 +106,9 @@ class MapaViewModel(
     }
 
     fun permisoDenegado() {
-        _estado.value = UbicacionUi.PermisoDenegado
+        _estado.value = UbicacionUi.Error(
+            "Sin permiso de ubicación no puedo mostrar dónde estás",
+            TipoError.SIN_PERMISO
+        )
     }
 }

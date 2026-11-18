@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -34,18 +32,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.carbajal.campusgps.model.TipoError
 import com.carbajal.campusgps.util.formatearDistancia
 import com.carbajal.campusgps.viewmodel.MapaViewModel
 import com.carbajal.campusgps.viewmodel.UbicacionUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
+fun PantallaMapa(
     vm: MapaViewModel = viewModel()
 ) {
     val estado by vm.estado.collectAsState()
@@ -57,7 +55,6 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
     val lanzador = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { resultado ->
-        // TODO 1: si algún valor es true -> vm.buscar(); si no -> vm.permisoDenegado()
         val concedido = resultado[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                 resultado[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (concedido) {
@@ -78,11 +75,9 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        // TODO 2: ¿ya tienes FINE o COARSE? -> vm.buscar()
         if (tieneFine || tieneCoarse) {
             vm.buscar(contexto)
         } else {
-            // TODO 3: si no -> lanzador.launch(arrayOf(FINE, COARSE))
             lanzador.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -93,8 +88,6 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
     }
 
     val bluePrimary = Color(0xFF00639B)
-    val redContainer = Color(0xFFFCE8E6)
-    val redText = Color(0xFFD93025)
 
     Scaffold(
         containerColor = Color.White,
@@ -193,54 +186,37 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
                     )
                 }
 
-                if (estado is UbicacionUi.PermisoDenegado) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = redContainer
-                            ),
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "Sin permiso de ubicación no puedo mostrar dónde estás",
-                                color = redText,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 18.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedButton(
-                            onClick = {
+                when (val actual = estado) {
+                    is UbicacionUi.Error -> {
+                        MensajeError(
+                            error = actual,
+                            onAbrirAjustes = {
                                 val intent = Intent(
                                     Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                                     Uri.fromParts("package", contexto.packageName, null)
                                 )
                                 contexto.startActivity(intent)
                             },
-                            shape = RoundedCornerShape(24.dp),
-                            border = BorderStroke(1.5.dp, bluePrimary)
-                        ) {
-                            Text(
-                                text = "Abrir ajustes",
-                                color = bluePrimary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                            )
-                        }
+                            onReintentar = { alPulsar() }
+                        )
                     }
+                    is UbicacionUi.PermisoDenegado -> {
+                        MensajeError(
+                            error = UbicacionUi.Error(
+                                "Sin permiso de ubicación no puedo mostrar dónde estás",
+                                TipoError.SIN_PERMISO
+                            ),
+                            onAbrirAjustes = {
+                                val intent = Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", contexto.packageName, null)
+                                )
+                                contexto.startActivity(intent)
+                            },
+                            onReintentar = { alPulsar() }
+                        )
+                    }
+                    else -> {}
                 }
             }
 
