@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -39,10 +40,27 @@ class MapaViewModel(
     private val _estado = MutableStateFlow<UbicacionUi>(UbicacionUi.Inicial)
     val estado: StateFlow<UbicacionUi> = _estado.asStateFlow()
 
-    private val _lugares = MutableStateFlow<List<LugarConDistancia>>(
+    private val _todosLosLugares = MutableStateFlow<List<LugarConDistancia>>(
         lugaresRepository.obtenerLugares().map { LugarConDistancia(it) }
     )
-    val lugares: StateFlow<List<LugarConDistancia>> = _lugares.asStateFlow()
+
+    private val _categoriaSeleccionada = MutableStateFlow<String?>(null)
+    val categoriaSeleccionada: StateFlow<String?> = _categoriaSeleccionada.asStateFlow()
+
+    val lugares: StateFlow<List<LugarConDistancia>> = combine(
+        _todosLosLugares,
+        _categoriaSeleccionada
+    ) { lista, categoria ->
+        if (categoria == null) {
+            lista
+        } else {
+            lista.filter { it.lugar.categoria.equals(categoria, ignoreCase = true) }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = _todosLosLugares.value
+    )
 
     private val _seleccionado = MutableStateFlow<Int?>(null)
     val seleccionado: StateFlow<Int?> = _seleccionado.asStateFlow()
@@ -76,7 +94,6 @@ class MapaViewModel(
                     actualizarDistancias(posDefault)
                     _estado.value = UbicacionUi.Lista(posDefault.latitud, posDefault.longitud)
                 } else {
-
                     _estado.value = UbicacionUi.Error(
                         "No se pudo obtener la ubicación. Activa el GPS e intenta de nuevo",
                         TipoError.GPS_APAGADO
@@ -98,8 +115,12 @@ class MapaViewModel(
             LugarConDistancia(lugar = lugar, distanciaMetros = dist.toInt())
         }.sortedBy { it.distanciaMetros }
 
-        _lugares.value = listaConDistancia
+        _todosLosLugares.value = listaConDistancia
         Log.d("MapaViewModel", "Lugares ordenados por distancia: $listaConDistancia")
+    }
+
+    fun seleccionarCategoria(categoria: String?) {
+        _categoriaSeleccionada.value = if (categoria.isNullOrBlank() || categoria == "Todas") null else categoria
     }
 
     fun seleccionar(id: Int?) {  //La funcion seleccionar id para actualizar el ID del lugar seleccionado

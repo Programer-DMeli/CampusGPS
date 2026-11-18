@@ -10,7 +10,7 @@ class LugaresRepositoryLocal : LugaresRepository {
             Lugar(2, "Biblioteca Central", "Estudio", "Biblioteca principal", Posicion(-12.0466, -77.0430)),
             Lugar(3, "Laboratorio de Cómputo", "Estudio", "Lab de informática", Posicion(-12.0450, -77.0410)),
             Lugar(4, "Auditorio Magno", "Eventos", "Auditorio del campus", Posicion(-12.0485, -77.0445)),
-            Lugar(5, "Cancha Deportiva", "Deportes", "Cancha multideportiva", Posicion(-12.0500, -77.0460))
+            Lugar(5, "Centro de Servicios", "Servicios", "Servicios administrativos", Posicion(-12.0500, -77.0460))
         )
     }
 }

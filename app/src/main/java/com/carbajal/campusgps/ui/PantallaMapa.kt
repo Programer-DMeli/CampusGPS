@@ -9,16 +9,22 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -50,6 +56,7 @@ fun PantallaMapa(
     val lugares by vm.lugares.collectAsState()
     val seleccionado by vm.seleccionado.collectAsState()
     val masCercano by vm.masCercano.collectAsState()
+    val categoriaActual by vm.categoriaSeleccionada.collectAsState()
     val contexto = LocalContext.current
 
     val lanzador = rememberLauncherForActivityResult(
@@ -128,9 +135,46 @@ fun PantallaMapa(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
-                    .padding(top = 8.dp, bottom = 4.dp),
+                    .padding(top = 6.dp, bottom = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Chips de filtrado por categoría (Estudio, Comida, Eventos, Servicios)
+                val categorias = listOf("Todas", "Estudio", "Comida", "Eventos", "Servicios")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    categorias.forEach { cat ->
+                        val esSeleccionada = (cat == "Todas" && categoriaActual == null) || (cat == categoriaActual)
+                        FilterChip(
+                            selected = esSeleccionada,
+                            onClick = {
+                                vm.seleccionarCategoria(if (cat == "Todas") null else cat)
+                            },
+                            label = {
+                                Text(
+                                    text = cat,
+                                    fontWeight = if (esSeleccionada) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 13.sp
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = bluePrimary,
+                                selectedLabelColor = Color.White,
+                                containerColor = Color(0xFFF2F4F8),
+                                labelColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Button(
                     onClick = { alPulsar() },
                     enabled = estado != UbicacionUi.Buscando,
@@ -178,12 +222,20 @@ fun PantallaMapa(
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Más cercano: ${masCercano?.nombre} ($textoDist)",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Más cercano: ",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = "${masCercano?.nombre} ($textoDist)",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color(0xFF333333)
+                        )
+                    }
                 }
 
                 when (val actual = estado) {
@@ -224,6 +276,7 @@ fun PantallaMapa(
             ListaLugares(
                 lugares = lugares,
                 seleccionado = seleccionado,
+                masCercanoId = masCercano?.id,
                 onClick = { id -> vm.seleccionar(id) },
                 modifier = Modifier
                     .fillMaxWidth()
