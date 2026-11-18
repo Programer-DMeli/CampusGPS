@@ -8,6 +8,7 @@ import com.carbajal.campusgps.data.LugaresRepository
 import com.carbajal.campusgps.data.LugaresRepositoryLocal
 import com.carbajal.campusgps.data.UbicacionRepository
 import com.carbajal.campusgps.data.UbicacionRepositoryGoogle
+import com.carbajal.campusgps.data.UserPreferencesRepository
 import com.carbajal.campusgps.model.Lugar
 import com.carbajal.campusgps.model.LugarConDistancia
 import com.carbajal.campusgps.model.Posicion
@@ -73,6 +74,16 @@ class MapaViewModel(
         initialValue = null
     )
 
+    fun cargarUltimoLugarGuardado(userPreferencesRepository: UserPreferencesRepository) {
+        viewModelScope.launch {
+            userPreferencesRepository.ultimoLugarId.collect { idGuardado ->
+                if (idGuardado != null && _seleccionado.value == null) {
+                    _seleccionado.value = idGuardado
+                }
+            }
+        }
+    }
+
     fun buscar(context: Context? = null) {
         _estado.value = UbicacionUi.Buscando
         viewModelScope.launch {
@@ -123,8 +134,13 @@ class MapaViewModel(
         _categoriaSeleccionada.value = if (categoria.isNullOrBlank() || categoria == "Todas") null else categoria
     }
 
-    fun seleccionar(id: Int?) {  //La funcion seleccionar id para actualizar el ID del lugar seleccionado
+    fun seleccionar(id: Int?, userPreferencesRepository: UserPreferencesRepository? = null) {
         _seleccionado.value = id
+        if (id != null && userPreferencesRepository != null) {
+            viewModelScope.launch {
+                userPreferencesRepository.guardarUltimoLugarId(id)
+            }
+        }
     }
 
     fun permisoDenegado() {

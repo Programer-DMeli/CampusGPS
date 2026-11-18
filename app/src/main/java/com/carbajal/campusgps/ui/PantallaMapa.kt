@@ -31,8 +31,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.carbajal.campusgps.data.UserPreferencesRepositoryImpl
 import com.carbajal.campusgps.model.TipoError
 import com.carbajal.campusgps.util.formatearDistancia
 import com.carbajal.campusgps.viewmodel.MapaViewModel
@@ -58,6 +61,14 @@ fun PantallaMapa(
     val masCercano by vm.masCercano.collectAsState()
     val categoriaActual by vm.categoriaSeleccionada.collectAsState()
     val contexto = LocalContext.current
+
+    val userPrefRepo = remember(contexto) {
+        UserPreferencesRepositoryImpl(contexto.applicationContext)
+    }
+
+    LaunchedEffect(Unit) {
+        vm.cargarUltimoLugarGuardado(userPrefRepo)
+    }
 
     val lanzador = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -197,7 +208,7 @@ fun PantallaMapa(
                 // Botón Ir al más cercano
                 OutlinedButton(
                     onClick = {
-                        masCercano?.let { vm.seleccionar(it.id) }
+                        masCercano?.let { vm.seleccionar(it.id, userPrefRepo) }
                     },
                     enabled = masCercano != null,
                     shape = RoundedCornerShape(24.dp),
@@ -277,7 +288,7 @@ fun PantallaMapa(
                 lugares = lugares,
                 seleccionado = seleccionado,
                 masCercanoId = masCercano?.id,
-                onClick = { id -> vm.seleccionar(id) },
+                onClick = { id -> vm.seleccionar(id, userPrefRepo) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
