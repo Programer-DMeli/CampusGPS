@@ -3,8 +3,11 @@ package com.carbajal.campusgps.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carbajal.campusgps.data.LugaresRepository
+import com.carbajal.campusgps.data.LugaresRepositoryLocal
 import com.carbajal.campusgps.data.UbicacionRepository
 import com.carbajal.campusgps.data.UbicacionRepositoryGoogle
+import com.carbajal.campusgps.model.LugarConDistancia
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,10 +25,16 @@ sealed interface UbicacionUi {
 typealias EstadoUbicacion = UbicacionUi
 
 class MapaViewModel(
-    private val repository: UbicacionRepository = UbicacionRepositoryGoogle()
+    private val repository: UbicacionRepository = UbicacionRepositoryGoogle(),
+    private val lugaresRepository: LugaresRepository = LugaresRepositoryLocal()
 ) : ViewModel() {
     private val _estado = MutableStateFlow<UbicacionUi>(UbicacionUi.Inicial)
     val estado: StateFlow<UbicacionUi> = _estado.asStateFlow()
+
+    private val _lugares = MutableStateFlow<List<LugarConDistancia>>(
+        lugaresRepository.obtenerLugares().map { LugarConDistancia(it) }
+    )
+    val lugares: StateFlow<List<LugarConDistancia>> = _lugares.asStateFlow()
 
     fun buscar(context: Context? = null) {
         _estado.value = UbicacionUi.Buscando

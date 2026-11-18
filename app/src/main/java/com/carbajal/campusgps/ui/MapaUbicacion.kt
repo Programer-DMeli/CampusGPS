@@ -2,16 +2,18 @@ package com.carbajal.campusgps.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.carbajal.campusgps.model.LugarConDistancia
 import com.carbajal.campusgps.viewmodel.UbicacionUi
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
+import com.google.maps.android.compose.rememberUpdatedMarkerState
 
 @Composable
 fun MapaUbicacion(
@@ -41,7 +43,7 @@ fun MapaUbicacion(
         modifier = modifier,
         cameraPositionState = camara
     ) {
-        // TODO 2: si el estado es Lista, un Marker "Estás aquí"
+        // Marcador de tu posición en rojo actual
         val miPosicion = when (estado) {
             is UbicacionUi.Lista -> LatLng(estado.latitud, estado.longitud)
             is UbicacionUi.Exito -> LatLng(estado.latitud, estado.longitud)
@@ -50,19 +52,23 @@ fun MapaUbicacion(
 
         if (miPosicion != null) {
             Marker(
-                state = rememberMarkerState(position = miPosicion),
+                state = rememberUpdatedMarkerState(position = miPosicion),
                 title = "Estás aquí"
             )
         }
 
-        // TODO 3 (Paso 4): un Marker por cada lugar
+        // Recorre lugares y dibuja un Marker azul por cada lugar usando key(id)
         for (item in lugares) {
-            val posLugar = LatLng(item.lugar.posicion.latitud, item.lugar.posicion.longitud)
-            Marker(
-                state = rememberMarkerState(position = posLugar),
-                title = item.lugar.nombre,
-                snippet = "${item.distanciaMetros} m"
-            )
+            key(item.lugar.id) {
+                Marker(
+                    state = rememberUpdatedMarkerState(
+                        position = LatLng(item.lugar.posicion.latitud, item.lugar.posicion.longitud)
+                    ),
+                    title = item.lugar.nombre,
+                    snippet = item.lugar.categoria,
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                )
+            }
         }
     }
 }

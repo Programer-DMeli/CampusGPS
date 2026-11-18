@@ -5,6 +5,7 @@ data class Posicion(val latitud: Double, val longitud: Double)
 data class Lugar(
     val id: Int,
     val nombre: String,
+    val categoria: String = "",
     val descripcion: String = "",
     val posicion: Posicion
 )

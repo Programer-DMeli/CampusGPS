@@ -1,5 +1,7 @@
 package com.carbajal.campusgps.data
 
-interface LugaresRepository {
+import com.carbajal.campusgps.model.Lugar
 
+interface LugaresRepository {
+    fun obtenerLugares(): List<Lugar>
 }

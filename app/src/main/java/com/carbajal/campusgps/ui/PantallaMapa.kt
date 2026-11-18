@@ -49,6 +49,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
     vm: MapaViewModel = viewModel()
 ) {
     val estado by vm.estado.collectAsState()
+    val lugares by vm.lugares.collectAsState()
     val contexto = LocalContext.current
 
     val lanzador = rememberLauncherForActivityResult(
@@ -117,6 +118,7 @@ fun PantallaMapa(  //la vita principal de contrado de permisos solicitados
             // MapaUbicacion ocupa el espacio libre con Modifier.weight(1f)
             MapaUbicacion(
                 estado = estado,
+                lugares = lugares,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
